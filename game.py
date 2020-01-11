@@ -136,8 +136,32 @@ def load_level(filename):
 
 tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
                'player': load_image('player_tomb_mask.png')}
-player_image = load_image('mar.png')
+player_image = load_image('player_tomb_mask.png')
 tile_width = tile_height = 47
+
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(sprite_player)
+        self.image = player_image
+        self.rect = self.image.get_rect().move(tile_width * pos_x + 1, tile_height * pos_y + 1)
+
+    def update(self, x, y):
+        self.rect.x += x
+        self.rect.y += y
+        self.f = False
+        if pygame.sprite.spritecollideany(self, all_sprite_wall):
+            self.rect.x -= x
+            self.f = True
+            if pygame.sprite.spritecollideany(self, all_sprite_wall):
+                self.rect.x += x
+                self.rect.y -= y
+                if pygame.sprite.spritecollideany(self, all_sprite_wall):
+                    self.rect.x -= x
+                    self.rect.y -= y
+
+    def check(self):
+        return self.f
 
 
 class Tile(pygame.sprite.Sprite):
@@ -145,26 +169,23 @@ class Tile(pygame.sprite.Sprite):
         super().__init__(all_sprite_start_end, all_sprite_wall)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
-        print(tile_type, pos_x, pos_y)
         if tile_type == 'start':
             self.add(all_sprite_start_end)
         if tile_type == 'wall':
             self.add(all_sprite_wall)
-        if tile_type == 'player':
-            self.add(sprite_player)
 
 
-def generate_level(spisok):
-    for i in range(len(spisok)):
-        for j in range(len(spisok[i])):
-            print(j)
-            if spisok[i][j] == '@':
-                Tile('start', j, i)
-            if spisok[i][j] == ',':
-                Tile('wall', j, i)
-            if spisok[i][j] == '!':
-                Tile('player', j, i)
-    return
+def generate_level(level):
+    new_player, x, y = None, None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            #if level[y][x] == '@':
+             #   Tile('start', x, y)
+            if level[y][x] == ',':
+                Tile('wall', x, y)
+            if level[y][x] == '!':
+                new_player = Player(x, y)
+    return new_player, x, y
 
 
 # Задействие музыки в игре
@@ -175,6 +196,7 @@ pygame.mixer.init()
 # pygame.mixer.music.play(-1)
 
 all_sprite = pygame.sprite.Group()
+player = None
 all_sprite_start_end = pygame.sprite.Group()
 all_sprite_wall = pygame.sprite.Group()
 sprite_player = pygame.sprite.Group()
@@ -183,27 +205,59 @@ clock = pygame.time.Clock()
 running = True
 s = 0
 t = 0
+x, y = 0, 0
 board = Movement(500, 500)
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONUP:
-            x, y = event.pos
-            if x in range(170, 336) and y in range(170, 216):
+            x1, y1 = event.pos
+            if x1 in range(170, 336) and y1 in range(170, 216) and s == 0:
                 Mask = Game(load_image('mar.png'), 8, 2, 20, 375)
-                s = 1
-
+                running = False
     all_sprite.update()
     if s == 0:
         screen.fill((255, 255, 255))
         all_sprite.draw(screen)
         start_screen()
-    elif s == 1:
-        screen.fill((0, 0, 0))
-        generate_level(load_level('1.txt'))
-        all_sprite_start_end.draw(screen)
-        print(len(all_sprite_start_end.sprites()))
     clock.tick(20)
+    pygame.display.flip()
+running = True
+f = True
+f1 = True
+f2 = False
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            all_keys = pygame.key.get_pressed()
+            if f1:
+                f1 = False
+                f2 = True
+                if all_keys[pygame.K_LEFT]:
+                    x = (-4)
+                elif all_keys[pygame.K_RIGHT]:
+                    x = 4
+                elif all_keys[pygame.K_UP]:
+                    y = (-4)
+                elif all_keys[pygame.K_DOWN]:
+                    y = 4
+    if f:
+        player, level_x, level_y = generate_level(load_level('1.txt'))
+        f = False
+    screen.fill((0, 0, 0))
+    all_sprite_start_end.draw(screen)
+    sprite_player.draw(screen)
+    if f2:
+        player.update(x, y)
+        f1 = player.check()
+        print(f1)
+        if f1:
+            f2 = False
+            x = 0
+            y = 0
+    clock.tick(60)
     pygame.display.flip()
 pygame.quit()
