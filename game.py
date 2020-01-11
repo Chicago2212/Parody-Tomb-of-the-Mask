@@ -135,7 +135,9 @@ def load_level(filename):
 
 
 tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
-               'player': load_image('player_tomb_mask.png')}
+               'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
+               'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
+               'thornsd': load_image('thornsd.png')}
 player_image = load_image('player_tomb_mask.png')
 tile_width = tile_height = 47
 
@@ -150,27 +152,46 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += x
         self.rect.y += y
         self.f = False
-        if pygame.sprite.spritecollideany(self, all_sprite_wall):
-            self.rect.x -= x
-            self.f = True
-            if pygame.sprite.spritecollideany(self, all_sprite_wall):
-                self.rect.x += x
-                self.rect.y -= y
+        if pygame.sprite.spritecollideany(self, all_sprite_thorns):
+            self.rect.x -= (x + 4)
+            self.f = 'game_over'
+            if pygame.sprite.spritecollideany(self, all_sprite_thorns):
+                self.rect.x += (x + 4)
+                self.rect.y -= (y + 4)
+                if pygame.sprite.spritecollideany(self, all_sprite_thorns):
+                    self.rect.x -= (x + 4)
+                    self.rect.y -= (y + 4)
+        elif pygame.sprite.spritecollideany(self, all_sprite_wall):
+                self.rect.x -= x
+                self.f = True
                 if pygame.sprite.spritecollideany(self, all_sprite_wall):
-                    self.rect.x -= x
+                    self.rect.x += x
                     self.rect.y -= y
+                    if pygame.sprite.spritecollideany(self, all_sprite_wall):
+                        self.rect.x -= x
+                        self.rect.y -= y
 
     def check(self):
         return self.f
 
 
+class Thorns(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(all_sprite_thorns)
+        self.image = tile_images[tile_type]
+        if tile_type == 'thornsw' or tile_type == 'thornsl':
+            self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+        elif tile_type == 'thornsr':
+            self.rect = self.image.get_rect().move(tile_width * pos_x + 3, tile_height * pos_y)
+        elif tile_type == 'thornsd':
+            self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y + 3)
+
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(all_sprite_start_end, all_sprite_wall)
+        super().__init__(all_sprite_wall)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
-        if tile_type == 'start':
-            self.add(all_sprite_start_end)
         if tile_type == 'wall':
             self.add(all_sprite_wall)
 
@@ -179,12 +200,20 @@ def generate_level(level):
     new_player, x, y = None, None, None
     for y in range(len(level)):
         for x in range(len(level[y])):
-            #if level[y][x] == '@':
-             #   Tile('start', x, y)
+            # if level[y][x] == '@':
+            #   Tile('start', x, y)
             if level[y][x] == ',':
                 Tile('wall', x, y)
-            if level[y][x] == '!':
+            elif level[y][x] == '!':
                 new_player = Player(x, y)
+            elif level[y][x] == 'w':
+                Thorns('thornsw', x, y)
+            elif level[y][x] == 'r':
+                Thorns('thornsr', x, y)
+            elif level[y][x] == 'l':
+                Thorns('thornsl', x, y)
+            elif level[y][x] == 'd':
+                Thorns('thornsd', x, y)
     return new_player, x, y
 
 
@@ -198,6 +227,7 @@ pygame.mixer.init()
 all_sprite = pygame.sprite.Group()
 player = None
 all_sprite_start_end = pygame.sprite.Group()
+all_sprite_thorns = pygame.sprite.Group()
 all_sprite_wall = pygame.sprite.Group()
 sprite_player = pygame.sprite.Group()
 dragon = AnimatedSprite(load_image('dragon_sheet8x2.png'), 8, 2, 20, 375)
@@ -248,13 +278,15 @@ while running:
         player, level_x, level_y = generate_level(load_level('1.txt'))
         f = False
     screen.fill((0, 0, 0))
-    all_sprite_start_end.draw(screen)
+    all_sprite_wall.draw(screen)
     sprite_player.draw(screen)
+    all_sprite_thorns.draw(screen)
     if f2:
         player.update(x, y)
         f1 = player.check()
-        print(f1)
-        if f1:
+        if f1 == 'game_over':
+            f2 = False
+        elif f1:
             f2 = False
             x = 0
             y = 0
