@@ -1,12 +1,24 @@
 import pygame
 import os
+import sqlite3
 import random
 import sys
 
 pygame.init()
-size = width, height = 1000, 1000
+size = width, height = 1200, 600
 screen = pygame.display.set_mode(size)
-screen2 = pygame.display.set_mode(size)
+
+
+def check_level_star(number):
+    name = 'level_star.db'
+    fullname = os.path.join('data/', name)
+    con = sqlite3.connect(fullname)
+    cur = con.cursor()
+    result = cur.execute("""SELECT kolvo FROM star
+                WHERE id == {}""".format(number))
+    for elem in result:
+        print(*elem)
+    con.close()
 
 
 def load_image(name, colorkey=None):
@@ -22,39 +34,24 @@ def load_image(name, colorkey=None):
     return image
 
 
-class AnimatedSprite(pygame.sprite.Sprite):
-    def __init__(self, sheet, columns, rows, x, y):
-        super().__init__(all_sprite)
-        self.frames = []
-        self.cut_sheet(sheet, columns, rows)
-        self.cur_frame = 0
-        self.image = self.frames[self.cur_frame]
-        self.rect = self.rect.move(x, y)
-
-    def cut_sheet(self, sheet, columns, rows):
-        self.rect = pygame.Rect(0, 0, sheet.get_width() // columns,
-                                sheet.get_height() // rows)
-        for j in range(rows):
-            for i in range(columns):
-                frame_location = (self.rect.w * i, self.rect.h * j)
-                self.frames.append(sheet.subsurface(pygame.Rect(frame_location, self.rect.size)))
-
-    def update(self):
-        self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-        self.image = self.frames[self.cur_frame]
+img_names = []
+i = 0
 
 
 def start_screen():
+    for img in img_names:
+        dog_rect = img.get_rect()
+        screen.blit(img, dog_rect)
     intro_text = ['Начать игру', '',
                   'Правила игры', '',
                   'Выйти']
     font = pygame.font.Font(None, 30)
     text_coord = 170
-    pygame.draw.rect(screen, (255, 0, 0), (170, 170, 165, 45), 0)
-    pygame.draw.rect(screen, (255, 0, 0), (170, 230, 165, 45), 0)
-    pygame.draw.rect(screen, (255, 0, 0), (170, 290, 165, 45), 0)
+    pygame.draw.rect(screen, pygame.Color('purple'), (170, 170, 165, 45), 0)
+    pygame.draw.rect(screen, pygame.Color('purple'), (170, 230, 165, 45), 0)
+    pygame.draw.rect(screen, pygame.Color('purple'), (170, 290, 165, 45), 0)
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('black'))
+        string_rendered = font.render(line, 1, pygame.Color('yellow'))
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
@@ -63,9 +60,39 @@ def start_screen():
         screen.blit(string_rendered, intro_rect)
 
 
+def generate_level(level):
+    new_player, x, y = None, None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            # if level[y][x] == '@':
+            #   Tile('start', x, y)
+            if level[y][x] == ',':
+                Tile('wall', x, y)
+            elif level[y][x] == '!':
+                new_player = Player(x, y)
+            elif level[y][x] == 'w':
+                Thorns('thornsw', x, y)
+            elif level[y][x] == 'r':
+                Thorns('thornsr', x, y)
+            elif level[y][x] == 'l':
+                Thorns('thornsl', x, y)
+            elif level[y][x] == 'd':
+                Thorns('thornsd', x, y)
+    return new_player, x, y
+
+
 def terminate():
     pygame.quit()
     sys.exit()
+
+
+def load_level(filename):
+    fulename = "data/" + filename
+    with open(fulename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    max_width = max(map(len, level_map))
+    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
 
 
 class Game(pygame.sprite.Sprite):
@@ -126,22 +153,6 @@ class Movement(Board):
         super().__init__(width, height)
 
 
-def load_level(filename):
-    fulename = "data/" + filename
-    with open(fulename, 'r') as mapFile:
-        level_map = [line.strip() for line in mapFile]
-    max_width = max(map(len, level_map))
-    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
-
-
-tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
-               'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
-               'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
-               'thornsd': load_image('thornsd.png')}
-player_image = load_image('player_tomb_mask.png')
-tile_width = tile_height = 47
-
-
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(sprite_player)
@@ -152,24 +163,25 @@ class Player(pygame.sprite.Sprite):
         self.rect.x += x
         self.rect.y += y
         self.f = False
+
         if pygame.sprite.spritecollideany(self, all_sprite_thorns):
-            self.rect.x -= (x + 4)
+            self.rect.x -= x
             self.f = 'game_over'
             if pygame.sprite.spritecollideany(self, all_sprite_thorns):
-                self.rect.x += (x + 4)
-                self.rect.y -= (y + 4)
+                self.rect.x += x
+                self.rect.y -= y
                 if pygame.sprite.spritecollideany(self, all_sprite_thorns):
-                    self.rect.x -= (x + 4)
-                    self.rect.y -= (y + 4)
-        elif pygame.sprite.spritecollideany(self, all_sprite_wall):
-                self.rect.x -= x
-                self.f = True
-                if pygame.sprite.spritecollideany(self, all_sprite_wall):
-                    self.rect.x += x
+                    self.rect.x -= x
                     self.rect.y -= y
-                    if pygame.sprite.spritecollideany(self, all_sprite_wall):
-                        self.rect.x -= x
-                        self.rect.y -= y
+        elif pygame.sprite.spritecollideany(self, all_sprite_wall):
+            self.rect.x -= x
+            self.f = True
+            if pygame.sprite.spritecollideany(self, all_sprite_wall):
+                self.rect.x += x
+                self.rect.y -= y
+                if pygame.sprite.spritecollideany(self, all_sprite_wall):
+                    self.rect.x -= x
+                    self.rect.y -= y
 
     def check(self):
         return self.f
@@ -196,41 +208,26 @@ class Tile(pygame.sprite.Sprite):
             self.add(all_sprite_wall)
 
 
-def generate_level(level):
-    new_player, x, y = None, None, None
-    for y in range(len(level)):
-        for x in range(len(level[y])):
-            # if level[y][x] == '@':
-            #   Tile('start', x, y)
-            if level[y][x] == ',':
-                Tile('wall', x, y)
-            elif level[y][x] == '!':
-                new_player = Player(x, y)
-            elif level[y][x] == 'w':
-                Thorns('thornsw', x, y)
-            elif level[y][x] == 'r':
-                Thorns('thornsr', x, y)
-            elif level[y][x] == 'l':
-                Thorns('thornsl', x, y)
-            elif level[y][x] == 'd':
-                Thorns('thornsd', x, y)
-    return new_player, x, y
+tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
+               'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
+               'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
+               'thornsd': load_image('thornsd.png')}
+player_image = load_image('player_tomb_mask.png')
+tile_width = tile_height = 30
 
 
-# Задействие музыки в игре
+# Р—Р°РґРµР№СЃС‚РІРёРµ РјСѓР·С‹РєРё РІ РёРіСЂРµ
 # file = 'crash.wav.mp3'
 pygame.init()
 pygame.mixer.init()
 # pygame.mixer.music.load(file)
 # pygame.mixer.music.play(-1)
-
 all_sprite = pygame.sprite.Group()
 player = None
 all_sprite_start_end = pygame.sprite.Group()
 all_sprite_thorns = pygame.sprite.Group()
 all_sprite_wall = pygame.sprite.Group()
 sprite_player = pygame.sprite.Group()
-dragon = AnimatedSprite(load_image('dragon_sheet8x2.png'), 8, 2, 20, 375)
 clock = pygame.time.Clock()
 running = True
 s = 0
@@ -257,6 +254,7 @@ running = True
 f = True
 f1 = True
 f2 = False
+povorot = 1
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -267,17 +265,23 @@ while running:
                 f1 = False
                 f2 = True
                 if all_keys[pygame.K_LEFT]:
-                    x = (-4)
+                    if povorot == 1:
+                        povorot *= (-1)
+                        player.image = pygame.transform.flip(player.image, 1, 0)
+                    x = (-3)
                 elif all_keys[pygame.K_RIGHT]:
-                    x = 4
+                    if povorot == -1:
+                        povorot *= (-1)
+                        player.image = pygame.transform.flip(player.image, 1, 0)
+                    x = 3
                 elif all_keys[pygame.K_UP]:
-                    y = (-4)
+                    y = (-3)
                 elif all_keys[pygame.K_DOWN]:
-                    y = 4
+                    y = 3
     if f:
         player, level_x, level_y = generate_level(load_level('1.txt'))
         f = False
-    screen.fill((0, 0, 0))
+    screen.fill((255, 255, 255))
     all_sprite_wall.draw(screen)
     sprite_player.draw(screen)
     all_sprite_thorns.draw(screen)
@@ -286,6 +290,7 @@ while running:
         f1 = player.check()
         if f1 == 'game_over':
             f2 = False
+            print(f1)
         elif f1:
             f2 = False
             x = 0
