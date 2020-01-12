@@ -39,9 +39,6 @@ i = 0
 
 
 def start_screen():
-    for img in img_names:
-        dog_rect = img.get_rect()
-        screen.blit(img, dog_rect)
     intro_text = ['Начать игру', '',
                   'Правила игры', '',
                   'Выйти']
@@ -58,6 +55,19 @@ def start_screen():
         intro_rect.x = 180
         text_coord += intro_rect.height
         screen.blit(string_rendered, intro_rect)
+    s = True
+    i = 0
+    while s:
+        img_names.append(load_image("{}.png".format(i % 67)))
+        i += 1
+        for img in img_names:
+            dog_rect = img.get_rect()
+            screen.blit(img, (500, 50))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                s = False
+        pygame.display.flip()
+    pygame.quit()
 
 
 def generate_level(level):
@@ -234,6 +244,7 @@ s = 0
 t = 0
 x, y = 0, 0
 board = Movement(500, 500)
+sol = True
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

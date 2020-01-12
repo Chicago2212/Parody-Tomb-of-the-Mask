@@ -23,8 +23,6 @@ def load_image(name, colorkey=None):
     return image
 
 
-
-
 img_names = []
 i = 0
 s = True
@@ -33,9 +31,9 @@ while s:
     i += 1
     for img in img_names:
         dog_rect = img.get_rect()
-        screen.blit(img, dog_rect)
+        screen.blit(img)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            s = False
     pygame.display.flip()
 pygame.quit()
