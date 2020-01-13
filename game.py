@@ -7,6 +7,7 @@ import sys
 pygame.init()
 size = width, height = 1200, 600
 screen = pygame.display.set_mode(size)
+screen2 = pygame.display.set_mode(size)
 
 
 def check_level_star(number):
@@ -16,8 +17,18 @@ def check_level_star(number):
     cur = con.cursor()
     result = cur.execute("""SELECT kolvo FROM star
                 WHERE id == {}""".format(number))
-    for elem in result:
-        print(*elem)
+    for i in result:
+        n = i[0]
+    con.close()
+    return n
+
+
+def update_level_star(number, kolvo_star):
+    name = 'level_star.db'
+    fullname = os.path.join('data/', name)
+    con = sqlite3.connect(fullname)
+    cur = con.cursor()
+    cur.execute("""Update star SET kolvo = {} WHERE id = {}""".format(kolvo_star, number))
     con.close()
 
 
@@ -34,40 +45,55 @@ def load_image(name, colorkey=None):
     return image
 
 
-img_names = []
-i = 0
-
-
 def start_screen():
-    intro_text = ['Начать игру', '',
-                  'Правила игры', '',
-                  'Выйти']
-    font = pygame.font.Font(None, 30)
-    text_coord = 170
-    pygame.draw.rect(screen, pygame.Color('purple'), (170, 170, 165, 45), 0)
-    pygame.draw.rect(screen, pygame.Color('purple'), (170, 230, 165, 45), 0)
-    pygame.draw.rect(screen, pygame.Color('purple'), (170, 290, 165, 45), 0)
-    for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('yellow'))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 10
-        intro_rect.top = text_coord
-        intro_rect.x = 180
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
-    s = True
+    running = True
     i = 0
-    while s:
-        img_names.append(load_image("{}.png".format(i % 67)))
-        i += 1
-        for img in img_names:
-            dog_rect = img.get_rect()
-            screen.blit(img, (500, 50))
+    clock = pygame.time.Clock()
+    while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                s = False
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                x1, y1 = event.pos
+                if x1 in range(75, 400) and y1 in range(51, 137):
+                    running = False
+                elif x1 in range(75, 400) and y1 in range(310, 396):
+                    pygame.quit()
+        screen.blit(load_image("GUI.png"), (0, 0))
+        screen.blit(img_names[i % 95], (500, 0))
+        i += 1
+        all_sprite.update()
+        all_sprite.draw(screen)
+        clock.tick(30)
         pygame.display.flip()
-    pygame.quit()
+
+
+def vibor_level():
+    running = True
+    clock = pygame.time.Clock()
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                all_keys = pygame.key.get_pressed()
+                if all_keys[pygame.K_ESCAPE]:
+                    start_screen()
+            if event.type == pygame.MOUSEBUTTONUP:
+                x1, y1 = event.pos
+                for i in level_coord:
+                    if x1 in i[0] and y1 in i[1]:
+                        return level_coord.index(i) + 1
+
+        star = []
+        for i in range(1, 11):
+            star.append(check_level_star(i))
+        screen.blit(load_image("vibor_level.png"), (0, 0))
+        for i in range(10):
+            screen.blit(load_image("star_level_{}.png".format(star[i])), (level_coord[i][0][0], level_coord[i][1][0] + 65))
+        clock.tick(30)
+        pygame.display.flip()
 
 
 def generate_level(level):
@@ -78,7 +104,8 @@ def generate_level(level):
             #   Tile('start', x, y)
             if level[y][x] == ',':
                 Tile('wall', x, y)
-            elif level[y][x] == '!':
+            elif level[y][x] == '#':
+                Thorns('vhod', x, y)
                 new_player = Player(x, y)
             elif level[y][x] == 'w':
                 Thorns('thornsw', x, y)
@@ -102,7 +129,6 @@ def load_level(filename):
         level_map = [line.strip() for line in mapFile]
     max_width = max(map(len, level_map))
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
-
 
 
 class Game(pygame.sprite.Sprite):
@@ -201,7 +227,7 @@ class Thorns(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(all_sprite_thorns)
         self.image = tile_images[tile_type]
-        if tile_type == 'thornsw' or tile_type == 'thornsl':
+        if tile_type == 'thornsw' or tile_type == 'thornsl' or tile_type == 'vhod':
             self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         elif tile_type == 'thornsr':
             self.rect = self.image.get_rect().move(tile_width * pos_x + 3, tile_height * pos_y)
@@ -218,20 +244,46 @@ class Tile(pygame.sprite.Sprite):
             self.add(all_sprite_wall)
 
 
+def GameOver():
+    # Задействие музыки в Game Over
+    # file = 'crash.wav.mp3'
+    pygame.init()
+    pygame.mixer.init()
+    # pygame.mixer.music.load(file)
+    # pygame.mixer.music.play(-1)
+    running = True
+    clock = pygame.time.Clock()
+    i = 0
+    while running:
+        i += 1
+        if i >= 60:
+            running = False
+        for j in range(10):
+            screen.blit(load_image('gameover.png'), (0, 0))
+        clock.tick(30)
+        pygame.display.flip()
+    game_over = True
+
+
 tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
                'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
                'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
-               'thornsd': load_image('thornsd.png')}
+               'thornsd': load_image('thornsd.png'), 'vhod': load_image('vhod.png')}
+level_coord = []
+for i in range(5):
+    level_coord.append((range(75 + i * 193 + 15, 185 + 193 * i), range(35, 143)))
+for i in range(5):
+    level_coord.append((range(945 - i * 193 + 15, 1055 - 193 * i), range(227, 335)))
 player_image = load_image('player_tomb_mask.png')
 tile_width = tile_height = 30
 
-
-# Р—Р°РґРµР№СЃС‚РІРёРµ РјСѓР·С‹РєРё РІ РёРіСЂРµ
+# Задействие музыки в игре
 # file = 'crash.wav.mp3'
 pygame.init()
 pygame.mixer.init()
 # pygame.mixer.music.load(file)
 # pygame.mixer.music.play(-1)
+
 all_sprite = pygame.sprite.Group()
 player = None
 all_sprite_start_end = pygame.sprite.Group()
@@ -239,70 +291,57 @@ all_sprite_thorns = pygame.sprite.Group()
 all_sprite_wall = pygame.sprite.Group()
 sprite_player = pygame.sprite.Group()
 clock = pygame.time.Clock()
+img_names = []
+for i in range(96):
+    img_names.append(load_image("Anime/DCk-{}.png".format(i)))
 running = True
 s = 0
 t = 0
 x, y = 0, 0
 board = Movement(500, 500)
-sol = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.MOUSEBUTTONUP:
-            x1, y1 = event.pos
-            if x1 in range(170, 336) and y1 in range(170, 216) and s == 0:
-                Mask = Game(load_image('mar.png'), 8, 2, 20, 375)
-                running = False
-    all_sprite.update()
-    if s == 0:
-        screen.fill((255, 255, 255))
-        all_sprite.draw(screen)
-        start_screen()
-    clock.tick(20)
-    pygame.display.flip()
-running = True
 f = True
-f1 = True
+game_over = True
 f2 = False
-povorot = 1
+sostoinie = 'main_menu'
+start_screen()
+a = vibor_level()
+sostoinie = 'vibor_level'
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
             all_keys = pygame.key.get_pressed()
-            if f1:
-                f1 = False
+            if game_over:
+                game_over = False
                 f2 = True
                 if all_keys[pygame.K_LEFT]:
-                    if povorot == 1:
-                        povorot *= (-1)
-                        player.image = pygame.transform.flip(player.image, 1, 0)
                     x = (-3)
                 elif all_keys[pygame.K_RIGHT]:
-                    if povorot == -1:
-                        povorot *= (-1)
-                        player.image = pygame.transform.flip(player.image, 1, 0)
                     x = 3
                 elif all_keys[pygame.K_UP]:
                     y = (-3)
                 elif all_keys[pygame.K_DOWN]:
                     y = 3
+            if all_keys[pygame.K_ESCAPE]:
+                print('Здесь должно быть мини меню а пока выбор уровня')
+                a = vibor_level()
+                sostoinie = 'vibor_level'
     if f:
-        player, level_x, level_y = generate_level(load_level('1.txt'))
+        player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
         f = False
-    screen.fill((255, 255, 255))
+        sostoinie = 'play'
+    screen.fill((0, 0, 0))
     all_sprite_wall.draw(screen)
     sprite_player.draw(screen)
     all_sprite_thorns.draw(screen)
     if f2:
         player.update(x, y)
-        f1 = player.check()
-        if f1 == 'game_over':
+        game_over = player.check()
+        if game_over == 'game_over':
             f2 = False
-            print(f1)
-        elif f1:
+            GameOver()
+        elif game_over:
             f2 = False
             x = 0
             y = 0
