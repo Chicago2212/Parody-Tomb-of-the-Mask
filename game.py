@@ -85,7 +85,6 @@ def vibor_level():
                 for i in level_coord:
                     if x1 in i[0] and y1 in i[1]:
                         return level_coord.index(i) + 1
-
         star = []
         for i in range(1, 11):
             star.append(check_level_star(i))
@@ -104,8 +103,7 @@ def generate_level(level):
             #   Tile('start', x, y)
             if level[y][x] == ',':
                 Tile('wall', x, y)
-            elif level[y][x] == '#':
-                Thorns('vhod', x, y)
+            elif level[y][x] == '!':
                 new_player = Player(x, y)
             elif level[y][x] == 'w':
                 Thorns('thornsw', x, y)
@@ -115,6 +113,10 @@ def generate_level(level):
                 Thorns('thornsl', x, y)
             elif level[y][x] == 'd':
                 Thorns('thornsd', x, y)
+            elif level[y][x] == 'b':
+                Bat(x, y)
+            elif level[y][x] == 's':
+                Shoter(x, y)
     return new_player, x, y
 
 
@@ -200,13 +202,13 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += y
         self.f = False
 
-        if pygame.sprite.spritecollideany(self, all_sprite_thorns):
+        if pygame.sprite.spritecollideany(self, all_sprite_thorns) or pygame.sprite.spritecollideany(self, all_sprite_bat):
             self.rect.x -= x
             self.f = 'game_over'
-            if pygame.sprite.spritecollideany(self, all_sprite_thorns):
+            if pygame.sprite.spritecollideany(self, all_sprite_thorns) or pygame.sprite.spritecollideany(self, all_sprite_bat):
                 self.rect.x += x
                 self.rect.y -= y
-                if pygame.sprite.spritecollideany(self, all_sprite_thorns):
+                if pygame.sprite.spritecollideany(self, all_sprite_thorns) or pygame.sprite.spritecollideany(self, all_sprite_bat):
                     self.rect.x -= x
                     self.rect.y -= y
         elif pygame.sprite.spritecollideany(self, all_sprite_wall):
@@ -222,12 +224,23 @@ class Player(pygame.sprite.Sprite):
     def check(self):
         return self.f
 
+class Shoter(pygame.sprite.Sprite):
+    def __init__(self,pos_x, pos_y):
+        super().__init__(all_sprite_shoter)
+        self.image = load_image('trap_shooter_of.png')
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
 
+    def update(self, i):
+
+            if i % 120 <= 5:
+                self.image = load_image('trap_shooter_on.png')
+            else:
+                self.image = load_image('trap_shooter_of.png')
 class Thorns(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(all_sprite_thorns)
         self.image = tile_images[tile_type]
-        if tile_type == 'thornsw' or tile_type == 'thornsl' or tile_type == 'vhod':
+        if tile_type == 'thornsw' or tile_type == 'thornsl':
             self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         elif tile_type == 'thornsr':
             self.rect = self.image.get_rect().move(tile_width * pos_x + 3, tile_height * pos_y)
@@ -242,7 +255,18 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         if tile_type == 'wall':
             self.add(all_sprite_wall)
-
+def GMmenu():
+    running = True
+    i = 0
+    clock = pygame.time.Clock()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+        screen.blit(load_image("GMmenu.png"), (0, 0))
+        i += 1
+        clock.tick(30)
+        pygame.display.flip()
 
 def GameOver():
     # Задействие музыки в Game Over
@@ -258,14 +282,32 @@ def GameOver():
         i += 1
         if i >= 60:
             running = False
-        for j in range(10):
-            screen.blit(load_image('gameover.png'), (0, 0))
+        screen.blit(load_image('gameover.png'), (0, 0))
         clock.tick(30)
         pygame.display.flip()
     game_over = True
+    GMmenu()
+
+class Bat(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(all_sprite_bat)
+        self.image = bat_r[0]
+        self.x = 1
+        self.rect = self.image.get_rect().move(tile_width * pos_x + 1, tile_height * pos_y + 1)
+    def update(self, i):
+        self.rect.x += self.x
+        if i % 9 == 0:
+            if self.x > 0:
+                self.image = bat_r[i % 5]
+            else:
+                self.image = bat_l[i % 5]
+        if pygame.sprite.spritecollideany(self, all_sprite_wall) or pygame.sprite.spritecollideany(self, all_sprite_thorns) or pygame.sprite.spritecollideany(self, all_sprite_shoter):
+            self.rect.x -= self.x
+            self.x *= (-1)
 
 
-tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
+
+tile_images = {'wall': load_image('stena.png'), 'start': load_image('vhod.png'),
                'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
                'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
                'thornsd': load_image('thornsd.png'), 'vhod': load_image('vhod.png')}
@@ -288,9 +330,13 @@ all_sprite = pygame.sprite.Group()
 player = None
 all_sprite_start_end = pygame.sprite.Group()
 all_sprite_thorns = pygame.sprite.Group()
+all_sprite_shoter = pygame.sprite.Group()
 all_sprite_wall = pygame.sprite.Group()
 sprite_player = pygame.sprite.Group()
+all_sprite_bat = pygame.sprite.Group()
 clock = pygame.time.Clock()
+bat_r = [load_image("bat_r_1.png"), load_image("bat_r_2.png"), load_image("bat_r_3.png"), load_image("bat_r_4.png"), load_image("bat_r_5.png")]
+bat_l = [load_image("bat_l_1.png"), load_image("bat_l_2.png"), load_image("bat_l_3.png"), load_image("bat_l_4.png"), load_image("bat_l_5.png")]
 img_names = []
 for i in range(96):
     img_names.append(load_image("Anime/DCk-{}.png".format(i)))
@@ -306,7 +352,9 @@ sostoinie = 'main_menu'
 start_screen()
 a = vibor_level()
 sostoinie = 'vibor_level'
+i = 0
 while running:
+    i += 1
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -332,8 +380,14 @@ while running:
         f = False
         sostoinie = 'play'
     screen.fill((0, 0, 0))
+    if len(all_sprite_bat.sprites()) != 0:
+        all_sprite_bat.update(i)
+    if len(all_sprite_shoter.sprites()) != 0:
+        all_sprite_shoter.update(i)
     all_sprite_wall.draw(screen)
     sprite_player.draw(screen)
+    all_sprite_bat.draw(screen)
+    all_sprite_shoter.draw(screen)
     all_sprite_thorns.draw(screen)
     if f2:
         player.update(x, y)
