@@ -85,7 +85,6 @@ def vibor_level():
                 for i in level_coord:
                     if x1 in i[0] and y1 in i[1]:
                         return level_coord.index(i) + 1
-
         star = []
         for i in range(1, 11):
             star.append(check_level_star(i))
@@ -105,7 +104,6 @@ def generate_level(level):
             if level[y][x] == ',':
                 Tile('wall', x, y)
             elif level[y][x] == '#':
-                Thorns('vhod', x, y)
                 new_player = Player(x, y)
             elif level[y][x] == 'w':
                 Thorns('thornsw', x, y)
@@ -227,12 +225,14 @@ class Thorns(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(all_sprite_thorns)
         self.image = tile_images[tile_type]
-        if tile_type == 'thornsw' or tile_type == 'thornsl' or tile_type == 'vhod':
+        if tile_type == 'thornsw' or tile_type == 'thornsl':
             self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         elif tile_type == 'thornsr':
             self.rect = self.image.get_rect().move(tile_width * pos_x + 3, tile_height * pos_y)
         elif tile_type == 'thornsd':
             self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y + 3)
+        elif tile_type == 'vhod':
+            self.rect = self.image.get_rect().move(tile_width * pos_x - 20, tile_height * pos_y)
 
 
 class Tile(pygame.sprite.Sprite):
@@ -263,6 +263,21 @@ def GameOver():
         clock.tick(30)
         pygame.display.flip()
     game_over = True
+    GMmenu()
+
+
+def GMmenu():
+    running = True
+    i = 0
+    clock = pygame.time.Clock()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+        screen.blit(load_image("GMmenu.png"), (300, 200))
+        i += 1
+        clock.tick(30)
+        pygame.display.flip()
 
 
 tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
