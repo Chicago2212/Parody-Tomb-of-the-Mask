@@ -256,7 +256,7 @@ def GameOver():
     i = 0
     while running:
         i += 1
-        if i >= 60:
+        if i >= 30:
             running = False
         for j in range(10):
             screen.blit(load_image('gameover.png'), (0, 0))
@@ -269,14 +269,19 @@ def GameOver():
 def GMmenu():
     running = True
     i = 0
-    clock = pygame.time.Clock()
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                x, y = event.pos
+                if x in range(412, 688) and y in range(227, 270):
+                    generate_level(load_level('{}.txt'.format(a)))
+                    sostoinie = 'play'
+                    player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
+                    game_over = True
+                    running = False
         screen.blit(load_image("GMmenu.png"), (300, 200))
-        i += 1
-        clock.tick(30)
         pygame.display.flip()
 
 
@@ -321,6 +326,7 @@ sostoinie = 'main_menu'
 start_screen()
 a = vibor_level()
 sostoinie = 'vibor_level'
+level = ''
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -343,6 +349,7 @@ while running:
                 a = vibor_level()
                 sostoinie = 'vibor_level'
     if f:
+        level = load_level('{}.txt'.format(a))
         player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
         f = False
         sostoinie = 'play'
@@ -357,7 +364,6 @@ while running:
             f2 = False
             GameOver()
         elif game_over:
-            f2 = False
             x = 0
             y = 0
     clock.tick(60)
