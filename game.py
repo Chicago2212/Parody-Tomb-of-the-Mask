@@ -113,6 +113,8 @@ def generate_level(level):
                 Thorns('thornsl', x, y)
             elif level[y][x] == 'd':
                 Thorns('thornsd', x, y)
+            elif level[y][x] == 'm':
+                Monetka('monetka', x, y)
     return new_player, x, y
 
 
@@ -231,8 +233,6 @@ class Thorns(pygame.sprite.Sprite):
             self.rect = self.image.get_rect().move(tile_width * pos_x + 3, tile_height * pos_y)
         elif tile_type == 'thornsd':
             self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y + 3)
-        elif tile_type == 'vhod':
-            self.rect = self.image.get_rect().move(tile_width * pos_x - 20, tile_height * pos_y)
 
 
 class Tile(pygame.sprite.Sprite):
@@ -244,51 +244,21 @@ class Tile(pygame.sprite.Sprite):
             self.add(all_sprite_wall)
 
 
-def GameOver():
-    # Задействие музыки в Game Over
-    # file = 'crash.wav.mp3'
-    pygame.init()
-    pygame.mixer.init()
-    # pygame.mixer.music.load(file)
-    # pygame.mixer.music.play(-1)
-    running = True
-    clock = pygame.time.Clock()
-    i = 0
-    while running:
-        i += 1
-        if i >= 30:
-            running = False
-        for j in range(10):
-            screen.blit(load_image('gameover.png'), (0, 0))
-        clock.tick(30)
-        pygame.display.flip()
-    game_over = True
-    GMmenu()
+class Monetka(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(all_sprite_monetka)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
 
-
-def GMmenu():
-    running = True
-    i = 0
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-            if event.type == pygame.MOUSEBUTTONUP:
-                x, y = event.pos
-                if x in range(412, 688) and y in range(227, 270):
-                    generate_level(load_level('{}.txt'.format(a)))
-                    sostoinie = 'play'
-                    player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
-                    game_over = True
-                    running = False
-        screen.blit(load_image("GMmenu.png"), (300, 200))
-        pygame.display.flip()
+    def update(self):
+        if pygame.sprite.collide_rect(self, player):
+            self.kill()
 
 
 tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
                'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
                'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
-               'thornsd': load_image('thornsd.png'), 'vhod': load_image('vhod.png')}
+               'thornsd': load_image('thornsd.png'), 'monetka': load_image('monetka.png')}
 level_coord = []
 for i in range(5):
     level_coord.append((range(75 + i * 193 + 15, 185 + 193 * i), range(35, 143)))
@@ -306,6 +276,7 @@ pygame.mixer.init()
 
 all_sprite = pygame.sprite.Group()
 player = None
+all_sprite_monetka = pygame.sprite.Group()
 all_sprite_start_end = pygame.sprite.Group()
 all_sprite_thorns = pygame.sprite.Group()
 all_sprite_wall = pygame.sprite.Group()
@@ -326,7 +297,6 @@ sostoinie = 'main_menu'
 start_screen()
 a = vibor_level()
 sostoinie = 'vibor_level'
-level = ''
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -349,21 +319,22 @@ while running:
                 a = vibor_level()
                 sostoinie = 'vibor_level'
     if f:
-        level = load_level('{}.txt'.format(a))
         player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
         f = False
         sostoinie = 'play'
     screen.fill((0, 0, 0))
+    all_sprite_monetka.draw(screen)
     all_sprite_wall.draw(screen)
     sprite_player.draw(screen)
     all_sprite_thorns.draw(screen)
     if f2:
         player.update(x, y)
+        all_sprite_monetka.update()
         game_over = player.check()
         if game_over == 'game_over':
             f2 = False
-            GameOver()
         elif game_over:
+            f2 = False
             x = 0
             y = 0
     clock.tick(60)
