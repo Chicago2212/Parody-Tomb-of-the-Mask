@@ -11,28 +11,6 @@ screen = pygame.display.set_mode(size)
 screen2 = pygame.display.set_mode(size)
 
 
-def check_level_star(number):
-    name = 'level_star.db'
-    fullname = os.path.join('data/', name)
-    con = sqlite3.connect(fullname)
-    cur = con.cursor()
-    result = cur.execute("""SELECT kolvo FROM star
-                WHERE id == {}""".format(number))
-    for i in result:
-        n = i[0]
-    con.close()
-    return n
-
-
-def update_level_star(number, kolvo_star):
-    name = 'level_star.db'
-    fullname = os.path.join('data/', name)
-    con = sqlite3.connect(fullname)
-    cur = con.cursor()
-    cur.execute("""Update star SET kolvo = {} WHERE id = {}""".format(kolvo_star, number))
-    con.close()
-
-
 def load_image(name, colorkey=None):
     global fullname
     fullname = os.path.join('data', name)
@@ -88,6 +66,8 @@ def vibor_level():
                 for i in level_coord:
                     if x1 in i[0] and y1 in i[1]:
                         return level_coord.index(i) + 1
+                    if x1 in range(993, 1165) and y1 in range(500, 560):
+                        clear_all()
         star = []
         for i in range(1, 11):
             star.append(check_level_star(i))
@@ -131,6 +111,40 @@ def generate_level(level):
 def terminate():
     pygame.quit()
     sys.exit()
+
+
+def check_level_star(number):
+    name = 'level_star.db'
+    fullname = os.path.join('data/', name)
+    con = sqlite3.connect(fullname)
+    cur = con.cursor()
+    result = cur.execute("""SELECT kolvo FROM star
+                WHERE id == {}""".format(number))
+    for i in result:
+        n = i[0]
+    con.close()
+    return n
+
+
+def clear_all():
+    name = 'level_star.db'
+    fullname = os.path.join('data/', name)
+    con = sqlite3.connect(fullname)
+    cur = con.cursor()
+    for i in range(1, 11):
+        cur.execute("""Update star SET kolvo = 0 WHERE id = {}""".format(i))
+    con.commit()
+    con.close()
+
+
+def update_level_star(number, kolvo_star):
+    name = 'level_star.db'
+    fullname = os.path.join('data/', name)
+    con = sqlite3.connect(fullname)
+    cur = con.cursor()
+    cur.execute("""Update star SET kolvo = {} WHERE id = {}""".format(kolvo_star, number))
+    con.commit()
+    con.close()
 
 
 def load_level(filename):
@@ -268,6 +282,11 @@ class Bat(pygame.sprite.Sprite):
             self.rect.x -= self.x
             self.x *= (-1)
 
+    def clear_sprite(self):
+        self.kill()
+        self.image = bat_r[0]
+        self.x = 1
+
 
 def loading_screen():
     running = True
@@ -321,6 +340,41 @@ for i in range(5):
     level_coord.append((range(945 - i * 193 + 15, 1055 - 193 * i), range(227, 335)))
 player_image = load_image('player_tomb_mask.png')
 tile_width = tile_height = 30
+
+
+def gover():
+    running = True
+    clock = pygame.time.Clock()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                running = False
+        screen.blit(load_image('gameover.png'), (0, 0))
+        clock.tick(30)
+        pygame.display.flip()
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                x, y = event.pos
+                if x in range(420, 756) and y in range(190, 236):
+                    f2 = True
+                    running = False
+                    return 'restart'
+                if x in range(420, 826) and y in range(190, 306):
+                    running = False
+                    return 'vibor_level'
+        screen.blit(load_image('GMmenu_start.png'), (420, 190))
+        screen.blit(load_image('GMmenu_select_level.png'), (420, 260))
+        screen.blit(load_image('GMmenu_exit.png'), (420, 330))
+        clock.tick(30)
+        pygame.display.flip()
+
+
 
 # Задействие музыки в игре
 # file = 'crash.wav.mp3'
@@ -404,6 +458,34 @@ while running:
         game_over = player.check()
         if game_over == 'game_over':
             f2 = False
+            GM = gover()
+            if GM == 'restart':
+                player.kill()
+                x, y = 0, 0
+                all_sprite = pygame.sprite.Group()
+                all_sprite_monetka = pygame.sprite.Group()
+                exit_sprite = pygame.sprite.Group()
+                all_sprite_monetka = pygame.sprite.Group()
+                all_sprite_wall = pygame.sprite.Group()
+                all_sprite_thorns = pygame.sprite.Group()
+                all_sprite_bat = pygame.sprite.Group()
+                all_sprite_shoter = pygame.sprite.Group()
+                all_sprite_thorns = pygame.sprite.Group()
+                player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
+            elif GM == 'vibor_level':
+                player.kill()
+                x, y = 0, 0
+                all_sprite = pygame.sprite.Group()
+                all_sprite_monetka = pygame.sprite.Group()
+                exit_sprite = pygame.sprite.Group()
+                all_sprite_monetka = pygame.sprite.Group()
+                all_sprite_wall = pygame.sprite.Group()
+                all_sprite_thorns = pygame.sprite.Group()
+                all_sprite_bat = pygame.sprite.Group()
+                all_sprite_shoter = pygame.sprite.Group()
+                all_sprite_thorns = pygame.sprite.Group()
+                player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
+                vibor_level()
         elif game_over:
             f2 = False
             x = 0
