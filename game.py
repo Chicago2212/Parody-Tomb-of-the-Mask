@@ -279,7 +279,7 @@ tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png')
                'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
                'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
                'thornsd': load_image('thornsd.png'), 'monetka': load_image('monetka.png'),
-               'vuhod': load_image('vuhod.png')}
+               'vuhod': load_image('vuhod.jpg')}
 level_coord = []
 for i in range(5):
     level_coord.append((range(75 + i * 193 + 15, 185 + 193 * i), range(35, 143)))
@@ -328,6 +328,7 @@ while running:
             if game_over:
                 game_over = False
                 f2 = True
+
                 if all_keys[pygame.K_LEFT]:
                     x = (-3)
                 elif all_keys[pygame.K_RIGHT]:
@@ -346,6 +347,7 @@ while running:
         sostoinie = 'play'
     screen.fill((0, 0, 0))
     all_sprite_monetka.draw(screen)
+    exit_sprite.draw(screen)
     all_sprite_wall.draw(screen)
     sprite_player.draw(screen)
     all_sprite_thorns.draw(screen)
