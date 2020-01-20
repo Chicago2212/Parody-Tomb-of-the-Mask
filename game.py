@@ -10,6 +10,7 @@ size = width, height = 1200, 600
 screen = pygame.display.set_mode(size)
 screen2 = pygame.display.set_mode(size)
 
+
 def check_level_star(number):
     name = 'level_star.db'
     fullname = os.path.join('data/', name)
@@ -49,6 +50,7 @@ def start_screen():
     running = True
     i = 0
     clock = pygame.time.Clock()
+    screen.fill((0, 0, 0))
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -58,7 +60,8 @@ def start_screen():
                 if x1 in range(75, 400) and y1 in range(51, 137):
                     running = False
                 elif x1 in range(75, 400) and y1 in range(310, 396):
-                    pygame.quit()
+                    running = False
+                    terminate()
         screen.blit(load_image("GUI.png"), (0, 0))
         screen.blit(img_names2[i % 95], (500, 0))
         i += 1
