@@ -10,7 +10,6 @@ size = width, height = 1200, 600
 screen = pygame.display.set_mode(size)
 screen2 = pygame.display.set_mode(size)
 
-
 def check_level_star(number):
     name = 'level_star.db'
     fullname = os.path.join('data/', name)
@@ -61,7 +60,7 @@ def start_screen():
                 elif x1 in range(75, 400) and y1 in range(310, 396):
                     pygame.quit()
         screen.blit(load_image("GUI.png"), (0, 0))
-        screen.blit(img_names[i % 95], (500, 0))
+        screen.blit(img_names2[i % 95], (500, 0))
         i += 1
         all_sprite.update()
         all_sprite.draw(screen)
@@ -267,6 +266,22 @@ class Bat(pygame.sprite.Sprite):
             self.x *= (-1)
 
 
+def loading_screen():
+    running = True
+    i = 0
+    clock = pygame.time.Clock()
+    while running:
+        i += 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                running = False
+        screen.blit(img_names[i % 150], (175, 0))
+        clock.tick(30)
+        pygame.display.flip()
+
+
 class Monetka(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(all_sprite_monetka)
@@ -311,7 +326,6 @@ pygame.mixer.init()
 # pygame.mixer.music.load(file)
 # pygame.mixer.music.play(-1)
 
-
 player = None
 all_sprite = pygame.sprite.Group()
 all_sprite_monetka = pygame.sprite.Group()
@@ -324,8 +338,12 @@ all_sprite_bat = pygame.sprite.Group()
 all_sprite_shoter = pygame.sprite.Group()
 clock = pygame.time.Clock()
 img_names = []
+img_names2 = []
+for i in range(151):
+    img_names.append(load_image("animatiomfirst/P0hE-{}.png".format(i)))
 for i in range(96):
-    img_names.append(load_image("Anime/DCk-{}.png".format(i)))
+    img_names2.append(load_image("Anime/DCk-{}.png".format(i)))
+loading_screen()
 running = True
 s = 0
 t = 0
