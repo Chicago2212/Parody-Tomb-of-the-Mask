@@ -5,7 +5,6 @@ import random
 import sys
 import time
 
-
 pygame.init()
 size = width, height = 1200, 600
 screen = pygame.display.set_mode(size)
@@ -92,7 +91,8 @@ def vibor_level():
             star.append(check_level_star(i))
         screen.blit(load_image("vibor_level.png"), (0, 0))
         for i in range(10):
-            screen.blit(load_image("star_level_{}.png".format(star[i])), (level_coord[i][0][0], level_coord[i][1][0] + 65))
+            screen.blit(load_image("star_level_{}.png".format(star[i])),
+                        (level_coord[i][0][0], level_coord[i][1][0] + 65))
         clock.tick(30)
         pygame.display.flip()
 
@@ -119,6 +119,10 @@ def generate_level(level):
                 Monetka('monetka', x, y)
             elif level[y][x] == 'V':
                 Exit('vuhod', x, y)
+            elif level[y][x] == 'b':
+                Bat(x, y)
+            elif level[y][x] == 's':
+                Shoter(x, y)
     return new_player, x, y
 
 
@@ -157,37 +161,6 @@ class Game(pygame.sprite.Sprite):
         self.image = self.frames[self.cur_frame]
 
 
-class Board:
-    def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.board = [[0] * width for i in range(height)]
-        self.left = 10
-        self.top = 10
-        self.cell_size = 30
-
-    def set_view(self, left, top, cell_size):
-        self.left = left
-        self.top = top
-        self.cell_size = cell_size
-
-    def get_cell(self, mouse_pos):
-        cell = (mouse_pos[0] - self.left) // self.cell_size, (
-                mouse_pos[1] - self.left) // self.cell_size
-        if 0 <= cell[0] < self.width and 0 <= cell[1] < self.height:
-            return cell
-        return None
-
-    def on_click(self, cell_coords):
-        if cell_coords:
-            self.board[cell_coords[1]][cell_coords[0]] = 1 - self.board[cell_coords[1]][
-                cell_coords[0]]
-
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        self.on_click(cell)
-
-
 class Exit(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(exit_sprite)
@@ -197,11 +170,6 @@ class Exit(pygame.sprite.Sprite):
     def update(self):
         if pygame.sprite.collide_rect(self, player):
             print(1)
-
-
-class Movement(Board):
-    def __init__(self, width, height):
-        super().__init__(width, height)
 
 
 class Player(pygame.sprite.Sprite):
@@ -215,13 +183,19 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += y
         self.f = False
 
-        if pygame.sprite.spritecollideany(self, all_sprite_thorns):
+        if pygame.sprite.spritecollideany(self,
+                                          all_sprite_thorns) or pygame.sprite.spritecollideany(self,
+                                                                                               all_sprite_bat):
             self.rect.x -= x
             self.f = 'game_over'
-            if pygame.sprite.spritecollideany(self, all_sprite_thorns):
+            if pygame.sprite.spritecollideany(self,
+                                              all_sprite_thorns) or pygame.sprite.spritecollideany(
+                self, all_sprite_bat):
                 self.rect.x += x
                 self.rect.y -= y
-                if pygame.sprite.spritecollideany(self, all_sprite_thorns):
+                if pygame.sprite.spritecollideany(self,
+                                                  all_sprite_thorns) or pygame.sprite.spritecollideany(
+                    self, all_sprite_bat):
                     self.rect.x -= x
                     self.rect.y -= y
         elif pygame.sprite.spritecollideany(self, all_sprite_wall):
@@ -259,6 +233,40 @@ class Tile(pygame.sprite.Sprite):
             self.add(all_sprite_wall)
 
 
+class Shoter(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(all_sprite_shoter)
+        self.image = load_image('trap_shooter_of.png')
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+
+    def update(self, i):
+
+        if i % 120 <= 5:
+            self.image = load_image('trap_shooter_on.png')
+        else:
+            self.image = load_image('trap_shooter_of.png')
+
+
+class Bat(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(all_sprite_bat)
+        self.image = bat_r[0]
+        self.x = 1
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+
+    def update(self, i):
+        self.rect.x += self.x
+        if i % 9 == 0:
+            if self.x > 0:
+                self.image = bat_r[i % 12]
+            else:
+                self.image = bat_l[i % 12]
+        if pygame.sprite.spritecollideany(self, all_sprite_wall) or pygame.sprite.spritecollideany(
+                self, all_sprite_thorns) or pygame.sprite.spritecollideany(self, all_sprite_shoter):
+            self.rect.x -= self.x
+            self.x *= (-1)
+
+
 class Monetka(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(all_sprite_monetka)
@@ -279,7 +287,15 @@ tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png')
                'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
                'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
                'thornsd': load_image('thornsd.png'), 'monetka': load_image('monetka.png'),
-               'vuhod': load_image('vuhod.jpg')}
+               'vuhod': load_image('vuhod.png')}
+bat_r = [load_image("bat_r_1.png"), load_image("bat_r_2.png"), load_image("bat_r_3.png"),
+         load_image("bat_r_4.png"), load_image("bat_r_5.png"), load_image("bat_r_6.png"),
+         load_image("bat_r_6.png"), load_image("bat_r_5.png"), load_image("bat_r_4.png"),
+         load_image("bat_r_3.png"), load_image("bat_r_2.png"), load_image("bat_r_1.png")]
+bat_l = [load_image("bat_l_1.png"), load_image("bat_l_2.png"), load_image("bat_l_3.png"),
+         load_image("bat_l_4.png"), load_image("bat_l_5.png"), load_image("bat_l_6.png"),
+         load_image("bat_l_6.png"), load_image("bat_l_5.png"), load_image("bat_l_4.png"),
+         load_image("bat_l_3.png"), load_image("bat_l_2.png"), load_image("bat_l_1.png")]
 level_coord = []
 for i in range(5):
     level_coord.append((range(75 + i * 193 + 15, 185 + 193 * i), range(35, 143)))
@@ -295,14 +311,17 @@ pygame.mixer.init()
 # pygame.mixer.music.load(file)
 # pygame.mixer.music.play(-1)
 
-all_sprite = pygame.sprite.Group()
+
 player = None
+all_sprite = pygame.sprite.Group()
 all_sprite_monetka = pygame.sprite.Group()
 all_sprite_start_end = pygame.sprite.Group()
 all_sprite_thorns = pygame.sprite.Group()
 all_sprite_wall = pygame.sprite.Group()
 sprite_player = pygame.sprite.Group()
 exit_sprite = pygame.sprite.Group()
+all_sprite_bat = pygame.sprite.Group()
+all_sprite_shoter = pygame.sprite.Group()
 clock = pygame.time.Clock()
 img_names = []
 for i in range(96):
@@ -311,7 +330,7 @@ running = True
 s = 0
 t = 0
 x, y = 0, 0
-board = Movement(500, 500)
+i = 0
 f = True
 game_over = True
 f2 = False
@@ -328,7 +347,6 @@ while running:
             if game_over:
                 game_over = False
                 f2 = True
-
                 if all_keys[pygame.K_LEFT]:
                     x = (-3)
                 elif all_keys[pygame.K_RIGHT]:
@@ -346,11 +364,18 @@ while running:
         f = False
         sostoinie = 'play'
     screen.fill((0, 0, 0))
-    all_sprite_monetka.draw(screen)
+
     exit_sprite.draw(screen)
+    all_sprite_monetka.draw(screen)
     all_sprite_wall.draw(screen)
     sprite_player.draw(screen)
     all_sprite_thorns.draw(screen)
+    all_sprite_bat.draw(screen)
+    all_sprite_shoter.draw(screen)
+    all_sprite_thorns.draw(screen)
+    i += 1
+    all_sprite_bat.update(i)
+    all_sprite_shoter.update(i)
     if f2:
         player.update(x, y)
         all_sprite_monetka.update()
