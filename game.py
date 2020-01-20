@@ -3,6 +3,8 @@ import os
 import sqlite3
 import random
 import sys
+import time
+
 
 pygame.init()
 size = width, height = 1200, 600
@@ -115,6 +117,8 @@ def generate_level(level):
                 Thorns('thornsd', x, y)
             elif level[y][x] == 'm':
                 Monetka('monetka', x, y)
+            elif level[y][x] == 'V':
+                Exit('vuhod', x, y)
     return new_player, x, y
 
 
@@ -184,6 +188,17 @@ class Board:
         self.on_click(cell)
 
 
+class Exit(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(exit_sprite)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+
+    def update(self):
+        if pygame.sprite.collide_rect(self, player):
+            print(1)
+
+
 class Movement(Board):
     def __init__(self, width, height):
         super().__init__(width, height)
@@ -249,16 +264,22 @@ class Monetka(pygame.sprite.Sprite):
         super().__init__(all_sprite_monetka)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+        self.i = 0
 
     def update(self):
         if pygame.sprite.collide_rect(self, player):
+            self.i += 1
             self.kill()
+
+    def count(self):
+        return self.i
 
 
 tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
                'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
                'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
-               'thornsd': load_image('thornsd.png'), 'monetka': load_image('monetka.png')}
+               'thornsd': load_image('thornsd.png'), 'monetka': load_image('monetka.png'),
+               'vuhod': load_image('vuhod.png')}
 level_coord = []
 for i in range(5):
     level_coord.append((range(75 + i * 193 + 15, 185 + 193 * i), range(35, 143)))
@@ -281,6 +302,7 @@ all_sprite_start_end = pygame.sprite.Group()
 all_sprite_thorns = pygame.sprite.Group()
 all_sprite_wall = pygame.sprite.Group()
 sprite_player = pygame.sprite.Group()
+exit_sprite = pygame.sprite.Group()
 clock = pygame.time.Clock()
 img_names = []
 for i in range(96):
@@ -330,6 +352,7 @@ while running:
     if f2:
         player.update(x, y)
         all_sprite_monetka.update()
+        exit_sprite.update()
         game_over = player.check()
         if game_over == 'game_over':
             f2 = False
