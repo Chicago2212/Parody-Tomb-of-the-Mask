@@ -52,7 +52,6 @@ def start_screen():
 def vibor_level():
     running = True
     clock = pygame.time.Clock()
-
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -182,10 +181,44 @@ class Exit(pygame.sprite.Sprite):
         super().__init__(exit_sprite)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
+        self.i = 0
 
     def update(self):
         if pygame.sprite.collide_rect(self, player):
-            print(1)
+            self.i += 1
+            if self.i == 10:
+                menu_after_level()
+
+
+def menu_after_level():
+    print(count)
+    running = True
+    clock = pygame.time.Clock()
+    if count < 25:
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                if event.type == pygame.MOUSEBUTTONUP:
+                    x, y = event.pos
+                    if x in range(35 + 370, 148 + 370) and y in range(170 + 180, 224 + 180):
+                        running = False
+            screen.blit(load_image('0stars.png'), (370, 180))
+            clock.tick(30)
+            pygame.display.flip()
+        player = None
+        sprite_player = pygame.sprite.Group()
+        all_sprite = pygame.sprite.Group()
+        all_sprite_monetka = pygame.sprite.Group()
+        exit_sprite = pygame.sprite.Group()
+        all_sprite_monetka = pygame.sprite.Group()
+        all_sprite_wall = pygame.sprite.Group()
+        all_sprite_thorns = pygame.sprite.Group()
+        all_sprite_bat = pygame.sprite.Group()
+        all_sprite_shoter = pygame.sprite.Group()
+        all_sprite_thorns = pygame.sprite.Group()
+        player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
+        vibor_level()
 
 
 class Player(pygame.sprite.Sprite):
@@ -256,7 +289,6 @@ class Shoter(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
 
     def update(self, i):
-
         if i % 120 <= 5:
             self.image = load_image('trap_shooter_on.png')
         else:
@@ -304,27 +336,27 @@ def loading_screen():
         pygame.display.flip()
 
 
+count = 0
+
+
 class Monetka(pygame.sprite.Sprite):
     def __init__(self, tile_type, pos_x, pos_y):
         super().__init__(all_sprite_monetka)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
-        self.i = 0
 
     def update(self):
+        global count
         if pygame.sprite.collide_rect(self, player):
-            self.i += 1
+            count += 1
             self.kill()
-
-    def count(self):
-        return self.i
 
 
 tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
                'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
                'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
                'thornsd': load_image('thornsd.png'), 'monetka': load_image('monetka.png'),
-               'vuhod': load_image('vuhod.png')}
+               'vuhod': load_image('vuhod.jpg')}
 bat_r = [load_image("bat_r_1.png"), load_image("bat_r_2.png"), load_image("bat_r_3.png"),
          load_image("bat_r_4.png"), load_image("bat_r_5.png"), load_image("bat_r_6.png"),
          load_image("bat_r_6.png"), load_image("bat_r_5.png"), load_image("bat_r_4.png"),
