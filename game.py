@@ -177,49 +177,43 @@ class Game(pygame.sprite.Sprite):
 
 
 class Exit(pygame.sprite.Sprite):
-    def __init__(self, tile_type, pos_x, pos_y):
-        super().__init__(exit_sprite)
+    def init(self, tile_type, pos_x, pos_y):
+        super().init(exit_sprite)
         self.image = tile_images[tile_type]
         self.rect = self.image.get_rect().move(tile_width * pos_x, tile_height * pos_y)
         self.i = 0
+        self.sotoinie = ''
 
     def update(self):
         if pygame.sprite.collide_rect(self, player):
             self.i += 1
             if self.i == 10:
-                menu_after_level()
+                self.sotoinie = menu_after_level()
+
+    def check(self):
+        return self.sotoinie
 
 
 def menu_after_level():
     print(count)
     running = True
     clock = pygame.time.Clock()
-    if count < 25:
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                if event.type == pygame.MOUSEBUTTONUP:
-                    x, y = event.pos
-                    if x in range(35 + 370, 148 + 370) and y in range(170 + 180, 224 + 180):
-                        running = False
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                x, y = event.pos
+                if x in range(35, 170) and y in range(170, 224):
+                    running = False
+                    return 'vibor_level'
+                if x in range(35 + 370, 148 + 370) and y in range(170 + 180, 224 + 180):
+                    running = False
+        if count < 25:
             screen.blit(load_image('0stars.png'), (370, 180))
-            clock.tick(30)
-            pygame.display.flip()
-        player = None
-        sprite_player = pygame.sprite.Group()
-        all_sprite = pygame.sprite.Group()
-        all_sprite_monetka = pygame.sprite.Group()
-        exit_sprite = pygame.sprite.Group()
-        all_sprite_monetka = pygame.sprite.Group()
-        all_sprite_wall = pygame.sprite.Group()
-        all_sprite_thorns = pygame.sprite.Group()
-        all_sprite_bat = pygame.sprite.Group()
-        all_sprite_shoter = pygame.sprite.Group()
-        all_sprite_thorns = pygame.sprite.Group()
-        player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
-        vibor_level()
-
+        clock.tick(30)
+        pygame.display.flip()
+    vibor_level()
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos_x, pos_y):
@@ -352,6 +346,7 @@ class Monetka(pygame.sprite.Sprite):
             self.kill()
 
 
+pygame.display.set_caption('Tomb of the mask Version 2.0')
 tile_images = {'wall': load_image('stena.png'), 'start': load_image('start.png'),
                'player': load_image('player_tomb_mask.png'), 'thornsw': load_image('thornsw.png'),
                'thornsr': load_image('thornsr.png'), 'thornsl': load_image('thornsl.png'),
@@ -375,6 +370,9 @@ tile_width = tile_height = 30
 
 
 def gover():
+    file2 = 'data/gameover.mp3'
+    pygame.mixer.music.load(file2)
+    pygame.mixer.music.play(0)
     running = True
     clock = pygame.time.Clock()
     while running:
@@ -387,6 +385,9 @@ def gover():
         clock.tick(30)
         pygame.display.flip()
     running = True
+    file2 = 'data/gamemusic.mp3'
+    pygame.mixer.music.load(file2)
+    pygame.mixer.music.play(-1)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -407,14 +408,6 @@ def gover():
         pygame.display.flip()
 
 
-
-# Задействие музыки в игре
-# file = 'crash.wav.mp3'
-pygame.init()
-pygame.mixer.init()
-# pygame.mixer.music.load(file)
-# pygame.mixer.music.play(-1)
-
 player = None
 all_sprite = pygame.sprite.Group()
 all_sprite_monetka = pygame.sprite.Group()
@@ -428,11 +421,23 @@ all_sprite_shoter = pygame.sprite.Group()
 clock = pygame.time.Clock()
 img_names = []
 img_names2 = []
+file = 'data/zagruzka.mp3'
+pygame.init()
+pygame.mixer.init()
+pygame.mixer.music.load(file)
+pygame.mixer.music.play(-1)
 for i in range(151):
     img_names.append(load_image("animatiomfirst/P0hE-{}.png".format(i)))
 for i in range(96):
     img_names2.append(load_image("Anime/DCk-{}.png".format(i)))
 loading_screen()
+# Задействие музыки в игре
+pygame.mixer.music.stop()
+file1 = 'data/gamemusic.mp3'
+pygame.init()
+pygame.mixer.init()
+pygame.mixer.music.load(file1)
+pygame.mixer.music.play(-1)
 running = True
 s = 0
 t = 0
@@ -518,6 +523,20 @@ while running:
                 all_sprite_thorns = pygame.sprite.Group()
                 player, level_x, level_y = generate_level(load_level('{}.txt'.format(a)))
                 vibor_level()
+            elif GM == 'vibor_level':
+                player.restart()
+                x, y = 0, 0
+                all_sprite = pygame.sprite.Group()
+                all_sprite_monetka = pygame.sprite.Group()
+                exit_sprite = pygame.sprite.Group()
+                all_sprite_monetka = pygame.sprite.Group()
+                all_sprite_wall = pygame.sprite.Group()
+                all_sprite_thorns = pygame.sprite.Group()
+                all_sprite_bat = pygame.sprite.Group()
+                all_sprite_shoter = pygame.sprite.Group()
+                all_sprite_thorns = pygame.sprite.Group()
+                a = vibor_level()
+                player = generate_level(load_level('{}.txt'.format(a)))
         elif game_over:
             f2 = False
             x = 0
