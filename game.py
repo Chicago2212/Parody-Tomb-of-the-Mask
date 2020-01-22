@@ -566,6 +566,7 @@ while running:
         sostoinie = 'play'
     exit_sprite.draw(screen)
     all_sprite_monetka.draw(screen)
+
     all_sprite_wall.draw(screen)
     sprite_player.draw(screen)
     all_sprite_thorns.draw(screen)
