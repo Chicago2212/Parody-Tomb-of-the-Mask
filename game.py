@@ -584,6 +584,9 @@ while running:
         player_condition = False
         GM = gover()
         if GM == 'restart':
+            file = 'data\gamemusic.mp3'
+            pygame.mixer.music.load(file)
+            pygame.mixer.music.play(-1)
             # очистка всех спрайтов
             player.restart()
             x, y = 0, 0
@@ -598,6 +601,9 @@ while running:
             all_sprite_thorns = pygame.sprite.Group()
             player, exit = generate_level(load_level('{}.txt'.format(result_choose_level)))
         elif GM == 'choose_level':
+            file = 'data\gamemusic.mp3'
+            pygame.mixer.music.load(file)
+            pygame.mixer.music.play(-1)
             # очистка всех спрайтов
             player.restart()
             x, y = 0, 0
@@ -684,6 +690,9 @@ while running:
             player_condition = False
             GM = gover()
             if GM == 'restart':
+                file = 'data\gamemusic.mp3'
+                pygame.mixer.music.load(file)
+                pygame.mixer.music.play(-1)
                 player.restart()
                 x, y = 0, 0
                 all_sprite = pygame.sprite.Group()
@@ -700,6 +709,9 @@ while running:
                 sostoinie = 'choose_level'
                 file = 'data\gamemusic.mp3'
             elif GM == 'choose_level':
+                file = 'data\gamemusic.mp3'
+                pygame.mixer.music.load(file)
+                pygame.mixer.music.play(-1)
                 # очистка всех спрайтов
                 player.restart()
                 x, y = 0, 0
