@@ -59,7 +59,7 @@ def gover():# отвечает за прорисовку игры после п�
                     return 'choose_level'
         screen.blit(load_image('GMmenu_start.png'), (420, 190))
         screen.blit(load_image('GMmenu_select_level.png'), (420, 260))
-        screen.blit(load_image('GMmenu_exit.png'), (420, 330))
+
         clock.tick(30)
         pygame.display.flip()
 
@@ -522,7 +522,7 @@ pygame.mixer.music.play(-1)
 
 start_screen()
 result_choose_level = choose_level()
-kolvo_star = [266, 282, 124, 146, 282, 124, 144, 256, 120, 146]
+kolvo_star = [266, 282, 108, 146, 114, 124, 144, 256, 120, 146]
 while running:
     screen.fill((0, 0, 0))
     for event in pygame.event.get():
@@ -560,6 +560,7 @@ while running:
                 all_sprite_thorns = pygame.sprite.Group()
                 all_sprite_arrow = pygame.sprite.Group()
                 game_over = True
+                player, exit = generate_level(load_level('{}.txt'.format(result_choose_level)))
     if sostoinie_play:
         player, exit = generate_level(load_level('{}.txt'.format(result_choose_level)))
         sostoinie_play = False
