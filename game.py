@@ -25,7 +25,7 @@ def load_image(name, colorkey=None):#возвращает полный путь 
     return image
 
 
-def gover():# отвечает за прорисовку игры после проигрыша уровня и меню после проигрыша
+def gover():   # отвечает за прорисовку игры после проигрыша уровня и меню после проигрыша
     filemusic = 'data\gameover.mp3'
     pygame.mixer.music.load(filemusic)
     pygame.mixer.music.play(0)
@@ -501,7 +501,7 @@ for i in range(151):
 for i in range(96):
     img_names2.append(load_image("Anime/DCk-{}.png".format(i)))
 
-# Слияние музыки и загрузки
+#  Слияние музыки и загрузки
 file = 'data\loading.mp3'
 pygame.mixer.music.load(file)
 pygame.mixer.music.play(-1)
@@ -533,14 +533,14 @@ while running:
             if game_over:
                 game_over = False
                 player_condition = True
-                if all_keys[pygame.K_LEFT]:
-                    x = (-3)
-                elif all_keys[pygame.K_RIGHT]:
-                    x = 3
-                elif all_keys[pygame.K_UP]:
-                    y = (-3)
-                elif all_keys[pygame.K_DOWN]:
-                    y = 3
+            if all_keys[pygame.K_LEFT]:
+                x = (-5)
+            elif all_keys[pygame.K_RIGHT]:
+                x = 5
+            elif all_keys[pygame.K_UP]:
+                y = (-5)
+            elif all_keys[pygame.K_DOWN]:
+                y = 5
             if all_keys[pygame.K_ESCAPE]:
                 # очистка всех спрайтов
                 result_choose_level = choose_level()
@@ -565,6 +565,7 @@ while running:
         player, exit = generate_level(load_level('{}.txt'.format(result_choose_level)))
         sostoinie_play = False
         sostoinie = 'play'
+
     exit_sprite.draw(screen)
     all_sprite_monetka.draw(screen)
 
